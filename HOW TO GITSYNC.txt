@@ -1,0 +1,8 @@
+Recuerda que siempre puedes!! Lo has vuelto a conseguir
+
+Instrucciones:
+
+-Trabajar en CPU project
+-Para guardar online, despues de hacer los cmmits, -> push origin master
+-para descargar cambios merge upstream/master, a su vez hacer esto antes en el forked
+
