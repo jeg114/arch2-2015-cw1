@@ -8,5 +8,6 @@
 #include "mips_cpu.h"
 #include "mips_test.h"
 #include "mips_instr.h"
+#include <iostream>
 
 #endif

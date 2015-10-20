@@ -3,29 +3,12 @@
 		Username: jeg114
 		Date:17/10/2015
 */
-
+#include "mips_core.h"
 #include "mips.h"
 
-struct mips_cpu_impl{
-	//Program Counter
-	uint32_t pc;
 
-	//General Purpose Registers
-	uint32_t GPReg[32];
+using namespace std;
 
-	//Special registers for MUL / DIV instructions
-	uint32_t LO;
-	uint32_t HI;
-
-	mips_mem_h mem_handle;
-
-	mips_cpu_impl(mips_mem_h mem) : mem_handle(mem), pc(0), LO(0), HI(0){
-		for (int i = 0; i <= 31; i++){
-			GPReg[i] = 0;
-		}
-	}
-
-};
 
 mips_cpu_h mips_cpu_create(mips_mem_h mem){
 	mips_cpu_h new_cpu = new mips_cpu_impl (mem);
@@ -69,6 +52,7 @@ mips_error mips_cpu_set_pc(mips_cpu_h state, uint32_t pc){
 	}
 	else{
 		state->pc = pc;
+		return mips_Success;
 	}
 }
 
@@ -83,13 +67,25 @@ void mips_cpu_free(mips_cpu_h state){
 	}
 }
 
+uint32_t to_big_Endi(const uint8_t *pData)
+{
+	return
+		(((uint32_t)pData[0]) << 24)
+		|
+		(((uint32_t)pData[1]) << 16)
+		|
+		(((uint32_t)pData[2]) << 8)
+		|
+		(((uint32_t)pData[3]) << 0);
+}
+
 mips_error mips_cpu_step(mips_cpu_h state){
 	
 	//Fetch Instruction
 
-	uint32_t instr;
-	//NEED TO DEAL WITH ENDIANESS!!!! 
-	mips_error step_err = mips_mem_read(state->mem_handle, state->pc, 4, (uint8_t*) &instr);
+	uint8_t buffer[4];
+	mips_error step_err = mips_mem_read(state->mem_handle, state->pc, 4,  buffer);
+	uint32_t instr = to_big_Endi(buffer);
 	if (step_err != mips_Success){
 		return step_err;
 	}
@@ -102,6 +98,7 @@ mips_error mips_cpu_step(mips_cpu_h state){
 			--- Opcode --- rs --- rt --- rd --- sa --- function ---
 			--- 6 Bits ---  5 ---  5 ---  5 ---  5 ---    6     ---
 			*/
+
 			uint8_t rs = (instr >> 21) & 0x1f;
 			uint8_t rt = (instr >> 16) & 0x1f;
 			uint8_t rd = (instr >> 11) & 0x1f;
@@ -170,6 +167,7 @@ mips_error mips_cpu_step(mips_cpu_h state){
 				case 1: return BGEZ(state, rs, imm);
 				case 16: return BLTZAL(state, rs, imm);
 				case 17: return BGEZAL(state, rs, imm);
+				default: return mips_ExceptionInvalidInstruction;
 				}
 			case 4: return BEQ(state, rs, rt, imm);
 			case 5: return BNE(state, rs, rt, imm);
@@ -196,6 +194,10 @@ mips_error mips_cpu_step(mips_cpu_h state){
 			default: return mips_ExceptionInvalidInstruction;
 			}
 		}
+		else{
+			return mips_ExceptionInvalidInstruction;
+		}
 	}
 }
+
 

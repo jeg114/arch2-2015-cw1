@@ -1,4 +1,7 @@
-#include "mips.h"
+#ifndef mips__instr
+#define mips_instr
+
+#include "mips_cpu.h"
 
 //BLTZ Branch on less than zero  Type: I Difficulty: 3 XXX Opcode: 1 
 mips_error BLTZ(mips_cpu_h state, uint8_t rs, uint16_t imm);
@@ -159,3 +162,4 @@ mips_error SLT(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa,
 //SLTU Set on less than unsigned  Type: R Difficulty: 1 X Opcode: 2B 
 mips_error SLTU(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function);
 
+#endif

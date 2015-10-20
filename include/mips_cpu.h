@@ -22,7 +22,27 @@ extern "C"{
 	
 	\struct mips_cpu_impl
 */
-struct mips_cpu_impl;
+	struct mips_cpu_impl{
+		//Program Counter
+		uint32_t pc;
+		uint32_t pcN;
+
+		//General Purpose Registers
+		uint32_t GPReg[32];
+
+		//Special registers for MUL / DIV instructions
+		uint32_t LO;
+		uint32_t HI;
+
+		mips_mem_h mem_handle;
+
+		mips_cpu_impl(mips_mem_h mem) : mem_handle(mem), pc(0), /*pcN que valor??*/ LO(0), HI(0){
+			for (int i = 0; i <= 31; i++){
+				GPReg[i] = 0;
+			}
+		}
+
+	};
 
 /*! An opaque handle to a mips.
 
