@@ -9,5 +9,6 @@
 #include "mips_test.h"
 #include "mips_instr.h"
 #include <iostream>
+#include <string>
 
 #endif

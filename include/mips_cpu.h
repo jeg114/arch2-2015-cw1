@@ -36,7 +36,20 @@ extern "C"{
 
 		mips_mem_h mem_handle;
 
-		mips_cpu_impl(mips_mem_h mem) : mem_handle(mem), pc(0), /*pcN que valor??*/ LO(0), HI(0){
+		/*
+		Debug Levels
+		
+		0 - NOTHING PRINTED
+		1 - Initial PC, Instruction (String), Next PC
+		2 - Initial PC, Instruction (32 Bit), type, Instruction (String), Next PC
+		3 - Initial PC, Instruction (32 Bit), type, Instruction (String), Decoded values (rt, rd, imm...), Next PC
+		4 - Same as 3 + initial state of cpu
+		5 - Same as 4 + Errors at all stages (eg Err Memread: 0)
+		*/
+		unsigned debug_level;
+		FILE* debug_out;
+
+		mips_cpu_impl(mips_mem_h mem) : mem_handle(mem), pc(0), /*pcN que valor??*/ LO(0), HI(0), debug_level(0), debug_out(NULL){
 			for (int i = 0; i <= 31; i++){
 				GPReg[i] = 0;
 			}
@@ -233,6 +246,8 @@ mips_error mips_cpu_set_debug_level(mips_cpu_h state, unsigned level, FILE *dest
 		h=0;    // Does nothing here, might could stop other errors
 */
 void mips_cpu_free(mips_cpu_h state);
+
+mips_error mips_cpu_advPC(mips_cpu_h state);
 
 /*!
 	@}
