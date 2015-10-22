@@ -13,6 +13,12 @@ int main(){
 	mips_mem_h mem = mips_mem_create_ram(4, 4);
 	mips_cpu_h cpu = mips_cpu_create(mem);
 
+
+	uint32_t usign = 0xFFFFFFFF;
+	uint32_t usign2 = 2;
+
+	fprintf(stdout, "%#010x + %#010x\n %i\n", usign, usign2, usign + usign2);
+
 	int debug;
 	FILE* file_h = NULL;
 	cout << "Set Debug level: " << endl;

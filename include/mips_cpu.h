@@ -55,6 +55,7 @@ extern "C"{
 			}
 		}
 
+		mips_error advPC(uint32_t offset);
 	};
 
 /*! An opaque handle to a mips.
@@ -247,7 +248,6 @@ mips_error mips_cpu_set_debug_level(mips_cpu_h state, unsigned level, FILE *dest
 */
 void mips_cpu_free(mips_cpu_h state);
 
-mips_error mips_cpu_advPC(mips_cpu_h state);
 
 /*!
 	@}

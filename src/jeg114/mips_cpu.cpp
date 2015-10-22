@@ -346,7 +346,8 @@ mips_error mips_cpu_set_debug_level(mips_cpu_h state, unsigned level, FILE *dest
 	}
 }
 
-mips_error mips_cpu_advPC(mips_cpu_h state){
-	state->pc = state -> pcN;
+mips_error mips_cpu_impl::advPC(uint32_t offset){
+	pc = pcN;
+	pcN = pcN + (offset << 2);
 	return mips_Success;
 }

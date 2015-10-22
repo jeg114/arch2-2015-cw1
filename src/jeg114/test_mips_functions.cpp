@@ -12,7 +12,7 @@ using namespace std;
 
 
 uint32_t R_type_instr(string instr, uint32_t rs, uint32_t rt, uint32_t rd){
-	
+
 	uint32_t function;
 	
 	if(instr == "ADDU"){
