@@ -1,6 +1,7 @@
 #include "mips_instr.h"
 #include "mips_internal.h"
 
+
 mips_error BLTZ(mips_cpu_h state, uint8_t rs, uint16_t imm){
 	return mips_Success;
 }
@@ -38,12 +39,12 @@ mips_error ADDI(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
 	uint32_t tmp = state->GPReg[rs] + imm;
 
 	//Overflow ocurrs only if operands have same sign
-	if ((state->GPReg[rs] > 0) && (imm > 0)){
+	if (is_positive(state->GPReg[rs]) && is_positive(sign_extend(imm))){
 		if (check > tmp){
 			return mips_ExceptionArithmeticOverflow;
 		}
 	}
-	else if ((state->GPReg[rs] < 0) && (imm < 0)){
+	else if (!is_positive(state->GPReg[rs]) && !is_positive(sign_extend(imm))){
 		if (check < tmp){
 			return mips_ExceptionArithmeticOverflow;
 		}
@@ -94,7 +95,16 @@ mips_error XORI(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
 }
 
 mips_error LUI(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
-	return mips_Success;
+	if (rs != 0){
+		return mips_ExceptionInvalidInstruction;
+	}
+	else{
+		if (rt != 0){
+			uint32_t tmp = imm;
+			state->GPReg[rt] = tmp << 16;
+		}
+		return state->advPC(1);
+	}
 }
 
 mips_error LB(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
@@ -110,7 +120,22 @@ mips_error LWL(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
 }
 
 mips_error LW(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
-	return mips_Success;
+	uint32_t addr = state->GPReg[rs] + sign_extend(imm);
+
+	uint8_t buffer[4];
+
+	//Mem_read expected to handle alignment
+	mips_error err = mips_mem_read(state->mem_handle, addr, 4, (uint8_t*) &buffer);
+
+	if (err != mips_Success){
+		return err;
+	}
+	else{
+		if (rs != 0){
+			state->GPReg[rs] = to_big_Endi((uint8_t*)&buffer);
+		}
+		return state->advPC(1);
+	}
 }
 
 mips_error LBU(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
@@ -134,7 +159,17 @@ mips_error SH(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
 }
 
 mips_error SW(mips_cpu_h state, uint8_t rs, uint8_t rt, uint16_t imm){
-	return mips_Success;
+	uint32_t addr = state->GPReg[rs] + sign_extend(imm);
+
+	//Mem_write expected to handle alignment
+	mips_error err = mips_mem_write(state->mem_handle, addr, 4, (uint8_t*)state->GPReg[rt]);
+
+	if (err != mips_Success){
+		return err;
+	}
+	else{
+		return state->advPC(1);
+	}
 }
 
 mips_error J(mips_cpu_h state, uint32_t target){
@@ -146,15 +181,41 @@ mips_error JAL(mips_cpu_h state, uint32_t target){
 }
 
 mips_error SLL(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
-	return mips_Success;
+	if (rs != 0){
+		return mips_ExceptionInvalidInstruction;
+	}
+	else if (rd != 0){
+		state->GPReg[rd] = state->GPReg[rd] << sa;
+	}
+	return state->advPC(1);
 }
 
 mips_error SRL(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
-	return mips_Success;
+	if (rs != 0){
+		return mips_ExceptionInvalidInstruction;
+	}
+	else if (rd != 0){
+		state->GPReg[rd] = state->GPReg[rd] >> sa;
+	}
+	return state->advPC(1);
 }
 
 mips_error SRA(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
-	return mips_Success;
+	if (rs != 0){
+		return mips_ExceptionInvalidInstruction;
+	}
+	else if (rd != 0){
+		if ((state->GPReg[rd] >> 31) == 1){
+			for (int i = 0; i < sa; i++){
+				state->GPReg[rd] = state->GPReg[rd] >> 1;
+				state->GPReg[rd] = state->GPReg[rd] | 0x80000000;
+			}
+		}
+		else{
+			state->GPReg[rd] = state->GPReg[rd] >> sa;
+		}
+	}
+	return state->advPC(1);
 }
 
 mips_error SLLV(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
@@ -162,11 +223,33 @@ mips_error SLLV(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa
 }
 
 mips_error SRLV(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
-	return mips_Success;
+	if (sa != 0){
+		return mips_ExceptionInvalidInstruction;
+	}
+	else if (rd != 0){
+		uint32_t tmp = rs & 0x0000001F;
+		state->GPReg[rd] = state->GPReg[rd] >> tmp;
+	}
+	return state->advPC(1);
 }
 
 mips_error SRAV(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
-	return mips_Success;
+	if (sa != 0){
+		return mips_ExceptionInvalidInstruction;
+	}
+	else if (rd != 0){
+		uint32_t shift = rt & 0x0000001F;
+		if ((state->GPReg[rd] >> 31) == 1){
+			for (int i = 0; i < shift; i++){
+				state->GPReg[rd] = state->GPReg[rd] >> 1;
+				state->GPReg[rd] = state->GPReg[rd] | 0x80000000;
+			}
+		}
+		else{
+			state->GPReg[rd] = state->GPReg[rd] >> shift;
+		}
+	}
+	return state->advPC(1);
 }
 
 mips_error JR(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
@@ -214,18 +297,20 @@ mips_error ADD(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa,
 	uint32_t tmp = state->GPReg[rs] + state->GPReg[rt];
 
 	//Overflow ocurrs only if operands have same sign
-	if ((state->GPReg[rs] > 0) && (state->GPReg[rt] > 0)){
+	if (is_positive(state->GPReg[rs]) && is_positive(state->GPReg[rt])){
 		if (check > tmp){
 			return mips_ExceptionArithmeticOverflow;
 		}
 	}
-	else if ((state->GPReg[rs] < 0) && (state->GPReg[rt] < 0)){
+	else if (!is_positive(state->GPReg[rs]) && !is_positive(state->GPReg[rt])){
 		if (check < tmp){
 			return mips_ExceptionArithmeticOverflow;
 		}
 	}
 
-	state->GPReg[rd] = tmp;
+	if (rd != 0){
+		state->GPReg[rd] = tmp;
+	}
 	return state->advPC(1);
 }
 
@@ -241,12 +326,12 @@ mips_error SUB(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa,
 	uint32_t tmp = state->GPReg[rs] - state->GPReg[rt];
 
 	//Overflow ocurrs only if operands have same sign (after negative applied to second operand)
-	if ((state->GPReg[rs] > 0) && (state->GPReg[rt] < 0)){
+	if (is_positive(state->GPReg[rs]) && !is_positive(state->GPReg[rt])){
 		if (check > tmp){
 			return mips_ExceptionArithmeticOverflow;
 		}
 	}
-	else if ((state->GPReg[rs] < 0) && (state->GPReg[rt] > 0)){
+	else if (!is_positive(state->GPReg[rs]) && is_positive(state->GPReg[rt])){
 		if (check < tmp){
 			return mips_ExceptionArithmeticOverflow;
 		}
@@ -286,7 +371,23 @@ mips_error XOR(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa,
 }
 
 mips_error SLT(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
-	return mips_Success;
+	if (sa != 0){
+		return mips_ExceptionInvalidInstruction;
+	}
+	if (rd != 0){
+		//Both positive/negative , unsigned compare
+		if (is_positive(state->GPReg[rs]) && is_positive(state->GPReg[rt]) ||
+			!is_positive(state->GPReg[rs]) && !is_positive(state->GPReg[rt])
+			){
+			state->GPReg[rd] = state->GPReg[rs] < state->GPReg[rt];
+		}
+		//Alternate signs -> unsigned compare is wrong -> opposite
+		else if (!is_positive(state->GPReg[rs]) && is_positive(state->GPReg[rt]) ||
+			is_positive(state->GPReg[rs]) && !is_positive(state->GPReg[rt])){
+			state->GPReg[rd] = state->GPReg[rs] > state->GPReg[rt];
+		}
+	}
+	return state->advPC(1);
 }
 
 mips_error SLTU(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa, uint8_t function){
@@ -296,3 +397,16 @@ mips_error SLTU(mips_cpu_h state, uint8_t rs, uint8_t rt, uint8_t rd, uint8_t sa
 	return state->advPC(1);
 }
 
+uint32_t sign_extend(uint16_t in){
+	uint32_t tmp = in;
+	if ((in >> 15) == 1){
+		return(tmp | 0xFFFF);
+	}
+	else{
+		return tmp;
+	}
+}
+
+bool is_positive(uint32_t in){
+	return (in >> 31) == 0;
+}

@@ -39,4 +39,6 @@ struct mips_cpu_impl{
 	mips_error advPC(uint32_t offset);
 };
 
+uint32_t to_big_Endi(const uint8_t *pData);
+
 #endif
