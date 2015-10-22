@@ -5,8 +5,6 @@ Date:17/10/2015
 */
 
 #include "mips_test_functions.h"
-#include "mips.h"
-#include "mips_core.h"
 
 using namespace std;
 

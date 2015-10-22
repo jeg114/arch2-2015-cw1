@@ -5,6 +5,8 @@ Declarations of functions to use during testing.
 #define mips_test_functions
 
 #include "mips.h"
+#include "mips_internal.h"
+#include <string>
 
 /*
 32 bit instr from a string function code (ADD, SUB, JR..) an R-type instruction,

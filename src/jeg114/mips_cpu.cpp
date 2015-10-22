@@ -6,10 +6,12 @@
 
 #include "mips_core.h"
 #include "mips.h"
+#include "mips_instr.h"
+#include "mips_internal.h"
+
 
 
 using namespace std;
-
 
 mips_cpu_h mips_cpu_create(mips_mem_h mem){
 	mips_cpu_h new_cpu = new mips_cpu_impl (mem);
@@ -325,7 +327,7 @@ mips_error mips_cpu_step(mips_cpu_h state){
 			}
 		}
 		else{
-			if (state->debug_level >= 2){ fprintf(state->debug_out, "Type: NONE (eg Coprocessor instructions opcode)\n", instr); }
+			if (state->debug_level >= 2){ fprintf(state->debug_out, "Type: NONE (eg Coprocessor instructions opcode)\n"); }
 			return mips_ExceptionInvalidInstruction;
 		}
 	}
@@ -349,5 +351,11 @@ mips_error mips_cpu_set_debug_level(mips_cpu_h state, unsigned level, FILE *dest
 mips_error mips_cpu_impl::advPC(uint32_t offset){
 	pc = pcN;
 	pcN = pcN + (offset << 2);
+	if (debug_level >= 2){
+		fprintf(debug_out, "New PC: 0x%08x     Next PC: 0x%08x \n --------------------", pc, pcN);
+	}
+	else if (debug_level == 1){
+		fprintf(debug_out, "New PC: 0x%08x\n --------------------", pc);
+	}
 	return mips_Success;
 }

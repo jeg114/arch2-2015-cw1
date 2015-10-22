@@ -1,6 +1,5 @@
-#include "mips.h"
 #include "mips_instr.h"
-#include "mips_cpu.h"
+#include "mips_internal.h"
 
 mips_error BLTZ(mips_cpu_h state, uint8_t rs, uint16_t imm){
 	return mips_Success;

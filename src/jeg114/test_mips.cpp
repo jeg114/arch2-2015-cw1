@@ -5,6 +5,8 @@ Date:17/10/2015
 */
 #define _CRT_SECURE_NO_DEPRECATE
 #include "mips.h"
+#include < string > 
+#include < iostream > 
 
 
 using namespace std;
@@ -15,7 +17,7 @@ int main(){
 
 
 	uint32_t usign = 0xFFFFFFFF;
-	uint32_t usign2 = 2;
+	uint32_t usign2 = 1;
 
 	fprintf(stdout, "%#010x + %#010x\n %i\n", usign, usign2, usign + usign2);
 
